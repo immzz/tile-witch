@@ -1,7 +1,5 @@
 ﻿package {
 	import flash.display.Sprite;
-
-
 	public class Layer {
 		public static var EMPTY_ELEMENT = null;
 		private static var EMPTY_FILL = null;
@@ -50,8 +48,6 @@
 		}
 
 		public function isOccupied(blockX: Number, blockY: Number): Boolean {
-			//trace("ATTEMPT OCCUPY ON",blockX,blockY);
-			//trace(matrix.length);
 			return !(matrix[blockX][blockY] == EMPTY_ELEMENT);
 		}
 
@@ -59,9 +55,20 @@
 			if ((blockX + tile.getCollisionWidth() - 1 >= getLayerWidth()) || (blockY - tile.getCollisionHeight() + 1 < 0)) {
 				return false;
 			}
-			for (var x: Number = blockX; x < blockX + tile.getCollisionWidth(); x++) {
-				for (var y: Number = blockY; y < blockY + tile.getCollisionHeight(); y++) {
+			for (var x: Number = blockX; x < blockX + tile.getCollisionWidth(); x+=tile.getCollisionWidth()) {
+				for (var y: Number = blockY; y < blockY + tile.getCollisionHeight(); y+= tile.getCollisionHeight()) {
 					if (tile.hasCollisionPointAt(x - blockX, y - blockY) && isOccupied(x, y)) {
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		
+		public function testTiles(tile: Tile, sblockX: Number, sblockY: Number, eblockX: Number, eblockY: Number): Boolean {
+			for (var x: Number = Math.min(sblockX,eblockX); x <= Math.max(sblockX,eblockX); x++) {
+				for (var y: Number = Math.min(sblockY,eblockY); y <= Math.max(sblockY,eblockY); y++) {
+					if(!testTile(tile,x,y)){
 						return false;
 					}
 				}
@@ -71,7 +78,7 @@
 
 		public function fillTile(blockX: Number, blockY: Number): Object {
 			var tile: Tile = matrix[blockX][blockY];
-			var placement_item:Sprite = tile.generatePlacementItem();
+			var placement_item:Sprite = tile.generateSpriteItem();
 			for (var x: Number = blockX; x < blockX + tile.getCollisionWidth(); x++) {
 				for (var y: Number = blockY; y > blockY - tile.getCollisionHeight(); y--) {
 					if (tile.hasCollisionPointAt(x - blockX, -(y - blockY))) {
@@ -116,6 +123,17 @@
 				}
 			}
 			trace("TILE ADDED AT "+blockX+","+blockY);
+			updateBoundry();
+			return true;
+		}
+		
+		public function addTiles(tile: Tile, sblockX: Number, sblockY: Number, eblockX: Number, eblockY: Number): Boolean {
+			for (var x: Number = Math.min(sblockX,eblockX); x <= Math.max(sblockX,eblockX); x+=tile.getCollisionWidth()) {
+				for (var y: Number = Math.min(sblockY,eblockY); y <= Math.max(sblockY,eblockY); y+= tile.getCollisionHeight()) {
+					matrix[x][y] = tile;
+				}
+			}
+
 			updateBoundry();
 			return true;
 		}
@@ -165,7 +183,5 @@
 			ty = min_y;
 			by = max_y;
 		}
-
 	}
-
 }

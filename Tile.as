@@ -23,6 +23,8 @@
 		public var collision_matrix: Array;
 		public var bitmapdata: BitmapData;
 		public var md5: String;
+		private var placement_sp:Sprite = null;
+		private var fill_sp:Sprite = null;
 
 		public function Tile(str: String, bitmap: Bitmap = null): void {
 			if (bitmap) {
@@ -51,8 +53,20 @@
 				tile: tile
 			};
 		}
+		
+		public function generatePlacementItem():Sprite{
+			if(placement_sp){ return placement_sp;}
+			placement_sp = generateSpriteItem();
+			return placement_sp;
+		}
+		
+		public function generateFillItem():Sprite{
+			if(fill_sp){ return fill_sp;}
+			fill_sp = generateSpriteItem();
+			return fill_sp;
+		}
 
-		public function generatePlacementItem(): Sprite {
+		public function generateSpriteItem(): Sprite {
 			var sp:Sprite = new Sprite();
 			sp.addChild(new Bitmap(bitmapdata));
 			sp.getChildAt(0).x = bl_x_offset;

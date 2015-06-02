@@ -45,6 +45,24 @@
 			return layers.length;
 		}
 		
+		public function swapLayers(index1:Number,index2:Number):Boolean{
+			if(index1 >= layers.length - 1 || index2 >= layers.length - 1 || index1 < 0 || index2 < 0){
+				return false;
+			}
+			var temp:Layer = layers[index1];
+			layers[index1] = layers[index2];
+			layers[index2] = temp;
+			return true;
+		}
+		
+		public function moveUpLayer(index:Number){
+			return swapLayers(index,index + 1);
+		}
+		
+		public function moveDownLayer(index:Number){
+			return swapLayers(index,index - 1);
+		}
+		
 		
 		
 		/*
