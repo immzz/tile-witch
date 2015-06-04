@@ -2,19 +2,22 @@
 	import flash.display.Sprite;
 	public class Layer {
 		public static var EMPTY_ELEMENT = null;
+		public static var EMPTY_ELEMENT_OUTPUT = "";
 		private static var EMPTY_FILL = null;
 		public var id: Number;
 		public var matrix: Array;
 		public var is_collision_layer: Boolean;
 		public var fill_matrix: Array;
+		public var free_objects:Array;
 		public var lx: Number;
 		public var rx: Number;
 		public var ty: Number;
 		public var by: Number;
+		public var map:Map;
 
-		public function Layer(layer_id: Number, nBlocksX: Number, nBlocksY: Number, is_collision: Boolean) {
-			
+		public function Layer(m:Map,layer_id: Number, nBlocksX: Number, nBlocksY: Number, is_collision: Boolean) {
 			id = layer_id;
+			free_objects = new Array();
 			matrix = new Array();
 			fill_matrix = new Array();
 			for (var i: Number = 0; i < nBlocksX; i++) {
@@ -25,14 +28,12 @@
 					fill_matrix[i][j] = EMPTY_FILL;
 				}
 			}
-			trace("NEW LAYER matrix",layer_id);
-			trace("NEW LAYER matrix",nBlocksX);
-			trace("NEW LAYER matrix",matrix.length);
 			is_collision_layer = is_collision;
-			lx = 0;
-			rx = 0;
-			ty = 0;
-			by = 0;
+			map = m;
+			lx = -1;
+			rx = -1;
+			ty = -1;
+			by = -1;
 		}
 
 		public function initFill(): void {
@@ -110,6 +111,26 @@
 		public function getLayerHeight(): Number {
 			return matrix[0].length;
 		}
+		
+		public function getOutputMatrix():Array{
+			var res:Array = new Array();
+			if(isEmpty() || map.isEmpty()){
+				return res;
+			}
+			var map_boundary:Object = map.getBoundary();
+			for(var i:Number=map_boundary.lx;i<=map_boundary.rx;i++){
+				res[i-map_boundary.lx] = new Array();
+				for(var j:Number=map_boundary.ty;j<=map_boundary.by;j++){
+					trace("OUTPUT",i,j,map_boundary.lx,map_boundary.ty);
+					if(matrix[i][j]){
+						res[i-map_boundary.lx][j-map_boundary.ty] = matrix[i][j].md5;
+					}else{
+						res[i-map_boundary.lx][j-map_boundary.ty] = EMPTY_ELEMENT_OUTPUT;
+					}
+				}
+			}
+			return res;
+		}
 
 		public function addTile(tile: Tile, blockX: Number, blockY: Number): Boolean {
 			if (is_collision_layer && !testTile(tile, blockX, blockY)) {
@@ -122,7 +143,13 @@
 					}
 				}
 			}
-			trace("TILE ADDED AT "+blockX+","+blockY);
+			//trace("TILE ADDED AT "+blockX+","+blockY);
+			updateBoundry();
+			return true;
+		}
+		
+		public function addTileFree(tile: Tile, x: Number, y: Number): Boolean {
+			free_objects.unshift({"tile":tile,"x":x,"y":y});
 			updateBoundry();
 			return true;
 		}
@@ -136,6 +163,10 @@
 
 			updateBoundry();
 			return true;
+		}
+		
+		public function isEmpty():Boolean{
+			return lx==-1&&rx==-1&&ty==-1&&by==-1;
 		}
 		
 		public function removeTile(blockX: Number, blockY: Number): Sprite {
@@ -155,7 +186,7 @@
 			return place_item;
 		}
 
-		private function updateBoundry(): void {
+		public function updateBoundry(): void {
 			var min_x:Number = 999999;
 			var max_x:Number = -1;
 			var min_y:Number = 999999;
@@ -178,10 +209,31 @@
 					}
 				}
 			}
-			lx = min_x;
-			rx = max_x;
-			ty = min_y;
-			by = max_y;
+			for(var i:Number=0;i<free_objects.length;i++){
+				var obj_lx:Number = Math.floor(free_objects[i].x / Map.BLOCK_SIZE);
+				var obj_rx:Number = Math.floor((free_objects[i].x + free_objects[i].tile.width) / Map.BLOCK_SIZE);
+				var obj_ty:Number = Math.floor(free_objects[i].y / Map.BLOCK_SIZE);
+				var obj_by:Number = Math.floor((free_objects[i].y + free_objects[i].tile.height) / Map.BLOCK_SIZE);
+				if(obj_lx < min_x){
+					min_x = obj_lx;
+				}
+				if(obj_rx > max_x){
+					max_x = obj_rx;
+				}
+				if(obj_ty < min_y){
+					min_y = obj_ty;
+				}
+				if(obj_by > max_y){
+					max_y = obj_by;
+				}
+			}
+			if(!(min_x == 999999 && max_x == -1 && min_y == 999999 && max_y == -1)){
+				lx = min_x;
+				rx = max_x;
+				ty = min_y;
+				by = max_y;
+			}
+			trace("UPDATED BOUNDARY",lx,rx,ty,by);
 		}
 	}
 }
