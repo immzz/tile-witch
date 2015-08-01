@@ -13,12 +13,24 @@
 	import flash.filesystem.FileStream;
 	import flash.filesystem.FileMode;
 	public class TileHelper {
-		public static function loadTilesetIntoDataProvider(tileset_list_dp: DataProvider, new_dp: DataProvider, show_check: Boolean): void {
+		public static function loadTilesetIntoDataProvider(tileset_list_dp: DataProvider, tileset_dps: Array, show_check: Boolean): void {
 			var fileToOpen: File = File.documentsDirectory.resolvePath('my.ts');
 			fileToOpen.addEventListener(Event.SELECT, openFileSelected);
 			var file_info: Object = new Object();
 			function openFileSelected(event: Event): void {
-
+				var opened_file_name:String = fileToOpen.name;
+				var created_new_dp:Boolean = true;
+				var tileset_dp:DataProvider = null;
+				for(var i:Number = 0;i<tileset_list_dp.length;i++){
+					if(tileset_list_dp.getItemAt(i).label == opened_file_name){
+						tileset_dp = tileset_list_dp.getItemAt(i).dp;
+						created_new_dp = false;
+						break;
+					}
+				}
+				if(!tileset_dp){
+					tileset_dp = new DataProvider();
+				}
 				var fs: FileStream = new FileStream();
 				fs.open(fileToOpen, FileMode.READ);
 				var file_str: String = fs.readUTFBytes(fs.bytesAvailable);
@@ -37,21 +49,24 @@
 					}
 
 					var hasTile: Boolean = false;
-					for (var l: Number = 0; l < new_dp.length; l++) {
-						if (new_dp.getItemAt(l).tile.md5 == imported_tile.md5) {
-							new_dp.replaceItemAt(item, l);
+					for (var l: Number = 0; l < tileset_dp.length; l++) {
+						if (tileset_dp.getItemAt(l).tile.md5 == imported_tile.md5) {
+							tileset_dp.replaceItemAt(item, l);
 							hasTile = true;
 							break;
 						}
 					}
 					if (!hasTile) {
-						new_dp.addItem(item);
+						tileset_dp.addItem(item);
 					}
 				}
-				tileset_list_dp.addItem({
-					"label": fileToOpen.name,
-					"dp": new_dp
-				});
+				if(created_new_dp){
+					tileset_list_dp.addItem({
+						"label": fileToOpen.name,
+						"dp": tileset_dp
+					});
+					tileset_dps.unshift(tileset_dp);
+				}
 			}
 			var typeFilter: FileFilter = new FileFilter("Data", "*.ts");
 			fileToOpen.browseForOpen("Open", [typeFilter]);

@@ -136,6 +136,7 @@
 		}
 
 		public function buildFromJSON(str: String): void {
+			trace("BUILD JSON str",str);
 			var tile_info: Object = JSON.parse(str);
 			bl_x_offset = tile_info.bl_x_offset;
 			bl_y_offset = tile_info.bl_y_offset;
